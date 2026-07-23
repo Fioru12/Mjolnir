@@ -3,21 +3,25 @@ import argparse
 from core.triage import SystemTriage
 from core.ioc_scanner import IOCScanner
 from core.reporter import IncidentReporter
+from core.colors import Colors
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 def run_triage(simulate: bool = False):
-    print("=" * 65)
-    print(" Mjolnir - Automated Incident Response & Triage Engine")
-    print("=" * 65)
+    print(Colors.FAIL + "=" * 65 + Colors.ENDC)
+    print(f"{Colors.BOLD} Mjolnir - Automated Incident Response & Triage Engine{Colors.ENDC}")
+    print(Colors.FAIL + "=" * 65 + Colors.ENDC)
 
     triage = SystemTriage()
     scanner = IOCScanner()
     reporter = IncidentReporter()
 
-    print("[*] Collecting live host telemetry (processes, network sockets, OS info)...")
+    print(f"{Colors.CYAN}[*]{Colors.ENDC} Collecting live host telemetry (processes, network sockets, OS info)...")
     triage_data = triage.run_full_triage()
 
     if simulate:
-        print("[!] SIMULATION MODE: Injecting mock IOC process and malicious network connection for testing...")
+        print(f"{Colors.WARNING}[!]{Colors.ENDC} SIMULATION MODE: Injecting mock IOC process and malicious network connection for testing...")
         triage_data["processes"].append({
             "pid": 9999,
             "name": "mimikatz.exe",
@@ -37,19 +41,20 @@ def run_triage(simulate: bool = False):
         })
         triage_data["processes_count"] = len(triage_data["processes"])
 
-    print("[*] Scanning telemetry against Threat Intelligence IOCs...")
+    print(f"{Colors.CYAN}[*]{Colors.ENDC} Scanning telemetry against Threat Intelligence IOCs...")
     ioc_hits = scanner.scan(triage_data)
-    print(f"[*] Scan complete. Found {len(ioc_hits)} indicator(s) of compromise.")
+    print(f"{Colors.CYAN}[*]{Colors.ENDC} Scan complete. Found {Colors.BOLD}{len(ioc_hits)}{Colors.ENDC} indicator(s) of compromise.")
 
-    print("[*] Generating Executive Incident Response Report...")
+    print(f"{Colors.CYAN}[*]{Colors.ENDC} Generating Executive Incident Response Report...")
     report_path = reporter.generate_markdown_report(triage_data, ioc_hits)
-    print(f"[SUCCESS] IR Report successfully generated and saved at: {report_path}")
+    print(f"{Colors.GREEN}[SUCCESS]{Colors.ENDC} IR Report saved at: {report_path}")
 
-    print("\n" + "=" * 65)
-    print(" SUMMARY OF FINDINGS:")
+    print("\n" + Colors.FAIL + "=" * 65 + Colors.ENDC)
+    print(f"{Colors.BOLD} SUMMARY OF FINDINGS:{Colors.ENDC}")
     for hit in ioc_hits:
-        print(f" - [{hit['severity']}] {hit['type']}: {hit['indicator']}")
-    print("=" * 65)
+        sev_color = Colors.FAIL if hit['severity'] == 'CRITICAL' else Colors.WARNING
+        print(f" - {sev_color}[{hit['severity']}]{Colors.ENDC} {hit['type']}: {hit['indicator']}")
+    print(Colors.FAIL + "=" * 65 + Colors.ENDC)
 
 def main():
     parser = argparse.ArgumentParser(description="Mjolnir: Automated Incident Response Triage Engine")
@@ -63,7 +68,6 @@ def main():
     if args.command == "triage":
         run_triage(simulate=args.simulate)
     else:
-        # Default action if no args provided
         run_triage(simulate=True)
 
 if __name__ == "__main__":

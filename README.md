@@ -1,47 +1,46 @@
 <div align="center">
 
-# ⚡ Mjolnir
-### *Automated Incident Response & Host Triage*
+<pre>
+   ███╗   ███╗     ██╗ ██████╗ ██╗     ██╗██████╗ 
+   ████╗ ████║     ██║██╔═══██╗██║     ██║██╔══██╗
+   ██╔████╔██║     ██║██║   ██║██║     ██║██████╔╝
+   ██║╚██╔╝██║██   ██║██║   ██║██║     ██║██╔══██╗
+   ██║ ╚═╝ ██║╚█████╔╝╚██████╔╝███████╗██║██║  ██║
+   ╚═╝     ╚═╝ ╚════╝  ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═╝
+</pre>
 
-[![CI](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml/badge.svg)](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml)
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
+`>>> mjolnir.exe --init --suite=asgard`
 
-<br/>
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
+![CI](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml/badge.svg?style=flat&logo=github)
+![Status](https://img.shields.io/badge/SYSTEM-OPERATIONAL-00FF00?style=flat&logo=hackthebox)
 
-**Mjolnir** è il modulo di *Incident Response* della suite **Asgard**. 
-Automatizza la raccolta di prove digitali su host compromessi, scansiona IOC (Indicatori di Compromesso) e genera report forensi pronti per l'analisi.
+---
+
+### 📟 SYSTEM CORE
+**Mjolnir** è il modulo di *Automated Triage & Forensics* della suite **Asgard**. 
+Non aspettare l'analista: **estrai, scansiona, documenta**.
 
 </div>
 
 ---
 
-### 🧠 Executive Summary
-Quando scatta un alert, il tempo è il nemico numero uno. **Mjolnir** esegue un triage forense istantaneo per permettere al team di sicurezza di agire con dati concreti invece di supposizioni.
-
-> [!TIP]
-> **Mjolnir** analizza in pochi secondi: Processi, Socket di Rete, Utenti e Artefatti di sistema.
-
----
-
-### 🚀 Funzionalit&agrave; Principali
-
-| Modulo | Obiettivo | Output |
-|:---|:---|:---|
-| 🔍 **Live Triage** | Estrazione telemetria host | JSON strutturato |
-| 🛡️ **IOC Hunting** | Scansione automatica (mimikatz, IP, etc) | Alert Severità |
-| 📄 **IR Report** | Generazione report forense automatico | Markdown Auditable |
+### ⚡ TACTICAL DASHBOARD
+<pre>
+[✓] HOST TRIAGE    : psutil-based live memory/socket snapshot
+[✓] IOC HUNTING    : Automated scan (mimikatz, nc, psexec)
+[✓] IR REPORTING   : Markdown Forensics Playbook ready
+</pre>
 
 ---
 
-### ⚙️ Demo in Modalit&agrave; Simulazione
-
+### 🛠️ LIVE SIMULATION
 ```bash
-# Esegui il triage simulando un attacco
 python main.py triage --simulate
 ```
 
-**Cosa vedrai nel terminale:**
+<details>
+<summary><b>> Visualizza Output Terminale</b></summary>
 
 ```text
 [*] Collecting live host telemetry...
@@ -49,22 +48,23 @@ python main.py triage --simulate
 [*] Scan complete. Found 2 indicator(s) of compromise.
 [*] Generating Executive Incident Response Report...
 [SUCCESS] IR Report saved at: output/Incident_Report_DESKTOP-ABC.md
+
+SUMMARY OF FINDINGS:
+ - [HIGH]     SUSPICIOUS_PROCESS: mimikatz.exe
+ - [CRITICAL] MALICIOUS_IP_CONNECTION: 203.0.113.50:443
 ```
+</details>
 
 ---
+
+### 🛡️ ASGARD SUITE
+| Module | Role |
+|:---|:---|
+| 🛡️ **Heimdall** | HIDS / Detection |
+| ⚡ **Mjolnir** | IR / Triage |
+| 🌈 **Bifrost** | Network / Telemetry |
 
 <div align="center">
-
-### 🛡️ Suite Asgard
-*Un ecosistema integrato per la difesa aziendale.*
-
-| Modulo | Ruolo |
-|:---|:---|
-| **Heimdall** | HIDS & Active Response |
-| **Mjolnir** | Incident Response & Triage |
-| **Bifrost** | Network Security & Telemetry |
-
----
 
 **[Fioru12](https://github.com/Fioru12)** &middot; MIT License
 </div>
