@@ -1,82 +1,70 @@
-# <div align="center">Mjolnir ⚡</div>
-<div align="center">
-  <sub><i>Il martello di Thor &mdash; Incident Response & Triage Engine</i></sub>
-</div>
-
-<br/>
-
 <div align="center">
 
+# ⚡ Mjolnir
+### *Automated Incident Response & Host Triage*
+
+[![CI](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml/badge.svg)](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![psutil](https://img.shields.io/badge/psutil-5.9+-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
-![CI](https://github.com/Fioru12/Mjolnir/actions/workflows/pytest.yml/badge.svg?style=for-the-badge)
-
-</div>
 
 <br/>
 
-> [!IMPORTANT]
-> **Mjolnir** è il secondo modulo della **suite Asgard**. 
-> Automatizza la fase di **triage post-incidente**, raccogliendo prove digitali e generando report forensi in pochi secondi.
+**Mjolnir** è il modulo di *Incident Response* della suite **Asgard**. 
+Automatizza la raccolta di prove digitali su host compromessi, scansiona IOC (Indicatori di Compromesso) e genera report forensi pronti per l'analisi.
+
+</div>
 
 ---
 
-## 🧠 Executive Summary
-Quando scatta un alert, il tempo è il nemico numero uno. **Mjolnir** fornisce una "fotografia" immediata dell'host compromesso, estraendo processi, connessioni e asset di sistema per permettere al team di sicurezza di agire con dati concreti.
-
-```
-  Host Compromesso  ──▶  Live Triage (psutil) ──▶  IOC Scanner (DB)
-                                                        │
-                                                        ▼
-                                                 Report Forense
-                                                  (Markdown)
-```
-
----
-
-## 🚀 Funzionalit&agrave;
-
-| Modulo | Cosa fa |
-|:---|:---|
-| 🔍 **System Triage** | Estrazione processi attivi, socket, utenti e info OS |
-| 🛡️ **IOC Scanner** | Caccia automatica a mimikatz, netcat, IP malevoli |
-| 📄 **Report Engine** | Generazione report Markdown con severity scoring e playbook |
+### 🧠 Executive Summary
+Quando scatta un alert, il tempo è il nemico numero uno. **Mjolnir** esegue un triage forense istantaneo per permettere al team di sicurezza di agire con dati concreti invece di supposizioni.
 
 > [!TIP]
-> Mjolnir genera un playbook di rimedio consigliato basato sulla severità dell'incidente rilevato.
+> **Mjolnir** analizza in pochi secondi: Processi, Socket di Rete, Utenti e Artefatti di sistema.
 
 ---
 
-## 🛠️ Quickstart
+### 🚀 Funzionalit&agrave; Principali
+
+| Modulo | Obiettivo | Output |
+|:---|:---|:---|
+| 🔍 **Live Triage** | Estrazione telemetria host | JSON strutturato |
+| 🛡️ **IOC Hunting** | Scansione automatica (mimikatz, IP, etc) | Alert Severità |
+| 📄 **IR Report** | Generazione report forense automatico | Markdown Auditable |
+
+---
+
+### ⚙️ Demo in Modalit&agrave; Simulazione
 
 ```bash
-# Installazione
-git clone https://github.com/Fioru12/Mjolnir.git
-cd Mjolnir
-pip install -r requirements.txt
-
-# Test
-pytest
-
-# Esegui Triage in modalità simulazione
+# Esegui il triage simulando un attacco
 python main.py triage --simulate
 ```
 
----
+**Cosa vedrai nel terminale:**
 
-## 🔗 Suite Asgard
-
-| Modulo | Ruolo | Stato |
-|:---|:---|:---:|
-| **Heimdall** | HIDS &middot; Rilevamento & Response | `Fatto` |
-| **Mjolnir** | IR &middot; Triage & Forensics | `Fatto` |
-| **Bifrost** | Rete &middot; Telemetria & Report Cifrati | `Fatto` |
+```text
+[*] Collecting live host telemetry...
+[!] SIMULATION: Injecting mock IOC process (mimikatz.exe)...
+[*] Scan complete. Found 2 indicator(s) of compromise.
+[*] Generating Executive Incident Response Report...
+[SUCCESS] IR Report saved at: output/Incident_Report_DESKTOP-ABC.md
+```
 
 ---
 
 <div align="center">
 
-**[Fioru12](https://github.com/Fioru12)** &middot; MIT License
+### 🛡️ Suite Asgard
+*Un ecosistema integrato per la difesa aziendale.*
 
+| Modulo | Ruolo |
+|:---|:---|
+| **Heimdall** | HIDS & Active Response |
+| **Mjolnir** | Incident Response & Triage |
+| **Bifrost** | Network Security & Telemetry |
+
+---
+
+**[Fioru12](https://github.com/Fioru12)** &middot; MIT License
 </div>
