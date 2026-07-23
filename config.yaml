@@ -1,0 +1,13 @@
+# Mjolnir - Incident Response & Triage Configuration
+
+# VirusTotal API integration (optional)
+# To enable:
+# 1. Sign up at https://www.virustotal.com
+# 2. Get your API key from https://www.virustotal.com/gui/my-apikey
+# 3. Fill in the value below
+virustotal:
+  api_key: ""
+
+# Report output directory
+report:
+  output_dir: "reports"
