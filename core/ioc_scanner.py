@@ -32,7 +32,8 @@ class IOCScanner:
         # Check network connections
         for conn in triage_data.get("network_connections", []):
             raddr = conn.get("remote_address", "")
-            if any(ip in raddr for ip in self.SUSPICIOUS_IPS):
+            remote_ip = raddr.split(":")[0] if ":" in raddr else raddr
+            if remote_ip in self.SUSPICIOUS_IPS:
                 hits.append({
                     "type": "MALICIOUS_IP_CONNECTION",
                     "severity": "CRITICAL",

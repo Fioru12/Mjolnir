@@ -57,14 +57,17 @@ class SystemTriage:
                     "status": conn.status,
                     "pid": conn.pid
                 })
-        except (psutil.AccessDenied, Exception):
+        except psutil.AccessDenied:
+            pass
+        except Exception:
             pass
         return connections
 
     def run_full_triage(self) -> Dict[str, Any]:
+        processes = self.collect_processes()
         return {
             "system_info": self.collect_system_info(),
-            "processes_count": len(self.collect_processes()),
-            "processes": self.collect_processes(),
+            "processes_count": len(processes),
+            "processes": processes,
             "network_connections": self.collect_network_connections()
         }
