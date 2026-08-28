@@ -17,3 +17,6 @@ dist/
 *.db
 *.sqlite3
 output/*.md
+
+# Local configuration - may contain secrets (e.g. VirusTotal API key)
+config.yaml

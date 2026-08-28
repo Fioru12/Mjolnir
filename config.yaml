@@ -7,6 +7,10 @@
 # 3. Fill in the value below
 virustotal:
   api_key: ""
+  requests_per_minute: 4
+  # How long (in hours) a cached VirusTotal hash result stays valid before
+  # it's re-checked against the live API.
+  cache_ttl_hours: 24
 
 # Report output directory
 report:

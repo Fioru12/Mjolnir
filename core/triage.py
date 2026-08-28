@@ -1,7 +1,8 @@
 import platform
 import psutil
+import time
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, Iterable, List, Optional
 
 class SystemTriage:
     """
@@ -37,6 +38,39 @@ class SystemTriage:
                     "cpu_percent": info.get("cpu_percent", 0.0),
                     "memory_percent": round(info.get("memory_percent", 0.0), 2)
                 })
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+        return processes
+
+    def refine_cpu_for_suspicious_pids(self, processes: List[Dict[str, Any]],
+                                        suspicious_pids: Iterable[int],
+                                        delay: float = 0.1) -> List[Dict[str, Any]]:
+        """
+        Re-sample cpu_percent for a specific set of PIDs using a proper
+        double-sample (prime, short sleep, read again).
+
+        psutil.process_iter(...'cpu_percent'...) always reports 0.0 on the
+        very first sample for a process, because a non-blocking cpu_percent
+        call needs two readings spaced apart to compute a rate - there is
+        nothing to compare against on the first call. Doing this properly
+        for EVERY process would mean sleeping `delay` seconds per process,
+        which makes full triage far too slow on a busy host. Since accurate
+        CPU usage mainly matters for processes we already suspect (flagged
+        by the IOC scanner), we only pay that cost for that small subset.
+        """
+        pid_set = set(suspicious_pids or [])
+        if not pid_set:
+            return processes
+
+        for proc in processes:
+            pid = proc.get("pid")
+            if pid not in pid_set:
+                continue
+            try:
+                p = psutil.Process(pid)
+                p.cpu_percent(interval=None)  # prime the internal counter
+                time.sleep(delay)
+                proc["cpu_percent"] = p.cpu_percent(interval=None)
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
         return processes

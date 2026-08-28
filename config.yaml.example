@@ -1,0 +1,24 @@
+# Mjolnir - Incident Response & Triage Configuration
+# Copy this file to config.yaml and adjust as needed.
+# config.yaml is git-ignored because it can hold sensitive values (API keys).
+
+# VirusTotal API integration (optional)
+# To enable:
+# 1. Sign up at https://www.virustotal.com
+# 2. Get your API key from https://www.virustotal.com/gui/my-apikey
+# 3. DO NOT paste the key here. Instead, set it via the VT_API_KEY
+#    environment variable, e.g.:
+#      Windows (PowerShell):  $env:VT_API_KEY = "your-key-here"
+#      Linux/macOS (bash):    export VT_API_KEY="your-key-here"
+#    VT_API_KEY, when set, always takes precedence over the api_key value
+#    below. The api_key field is only a fallback for local/offline use and
+#    should be left empty in any file that gets committed or shared.
+virustotal:
+  api_key: ""
+  # VirusTotal free tier allows 4 requests/minute. Adjust if you have a
+  # different quota (e.g. a paid API key).
+  requests_per_minute: 4
+
+# Report output directory
+report:
+  output_dir: "reports"

@@ -1,3 +1,4 @@
+import html
 import os
 from typing import Dict, Any, List
 
@@ -98,8 +99,18 @@ class IncidentReporter:
 
     def generate_html_report(self, triage_data: Dict[str, Any], ioc_hits: List[Dict[str, Any]]) -> str:
         sys_info = triage_data.get("system_info", {})
-        hostname = sys_info.get("hostname", "Unknown")
-        timestamp = sys_info.get("timestamp", "Unknown")
+        hostname_raw = sys_info.get("hostname", "Unknown")
+        timestamp_raw = sys_info.get("timestamp", "Unknown")
+
+        # Escape every dynamic value before it is interpolated into the HTML
+        # to prevent stored XSS via process names, paths, hostnames, or IOC
+        # details that may contain attacker-controlled strings.
+        hostname = html.escape(str(hostname_raw))
+        timestamp = html.escape(str(timestamp_raw))
+        os_name = html.escape(str(sys_info.get('os')))
+        os_release = html.escape(str(sys_info.get('os_release')))
+        os_version = html.escape(str(sys_info.get('os_version')))
+        architecture = html.escape(str(sys_info.get('architecture')))
 
         severity_level = "LOW"
         if any(h.get("severity") == "CRITICAL" for h in ioc_hits):
@@ -136,7 +147,7 @@ class IncidentReporter:
         <p><strong>Severity:</strong> <span class="badge">{severity_level}</span></p>
 
         <h2>1. Executive Summary</h2>
-        <p>Automated host triage executed on <code>{hostname}</code> running <code>{sys_info.get('os')} {sys_info.get('os_release')}</code>. Analyzed <code>{triage_data.get('processes_count', 0)}</code> running processes against threat intelligence databases.</p>
+        <p>Automated host triage executed on <code>{hostname}</code> running <code>{os_name} {os_release}</code>. Analyzed <code>{html.escape(str(triage_data.get('processes_count', 0)))}</code> running processes against threat intelligence databases.</p>
         <p><strong>Total IOC Hits:</strong> {len(ioc_hits)}</p>
 
         <h2>2. IOC Findings</h2>
@@ -144,7 +155,11 @@ class IncidentReporter:
         if ioc_hits:
             html_content += """<table><tr><th>Type</th><th>Indicator</th><th>Severity</th><th>Details</th></tr>"""
             for h in ioc_hits:
-                html_content += f"<tr><td>{h.get('type')}</td><td><code>{h.get('indicator')}</code></td><td><span style='color:{sev_color}'>{h.get('severity')}</span></td><td>{h.get('details')}</td></tr>"
+                hit_type = html.escape(str(h.get('type')))
+                hit_indicator = html.escape(str(h.get('indicator')))
+                hit_severity = html.escape(str(h.get('severity')))
+                hit_details = html.escape(str(h.get('details')))
+                html_content += f"<tr><td>{hit_type}</td><td><code>{hit_indicator}</code></td><td><span style='color:{sev_color}'>{hit_severity}</span></td><td>{hit_details}</td></tr>"
             html_content += "</table>"
         else:
             html_content += "<p>✅ No known IOCs or suspicious signatures detected in active memory or sockets.</p>"
@@ -152,9 +167,9 @@ class IncidentReporter:
         html_content += f"""
         <h2>3. Host Telemetry</h2>
         <ul>
-            <li><strong>OS:</strong> {sys_info.get('os')} {sys_info.get('os_version')}</li>
-            <li><strong>Architecture:</strong> {sys_info.get('architecture')}</li>
-            <li><strong>Active Processes:</strong> {triage_data.get('processes_count')}</li>
+            <li><strong>OS:</strong> {os_name} {os_version}</li>
+            <li><strong>Architecture:</strong> {architecture}</li>
+            <li><strong>Active Processes:</strong> {html.escape(str(triage_data.get('processes_count')))}</li>
             <li><strong>Network Connections:</strong> {len(triage_data.get('network_connections', []))}</li>
         </ul>
 
@@ -170,7 +185,7 @@ class IncidentReporter:
 </body>
 </html>
 """
-        filename = f"Incident_Report_{hostname}_{timestamp.replace(':', '-').replace(' ', '_')}.html"
+        filename = f"Incident_Report_{hostname_raw}_{str(timestamp_raw).replace(':', '-').replace(' ', '_')}.html"
         filepath = os.path.join(self.output_dir, filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(html_content)
