@@ -6,6 +6,7 @@ from core.triage import SystemTriage
 from core.ioc_scanner import IOCScanner
 from core.reporter import IncidentReporter
 from core.virustotal import VirusTotalScanner
+from core.yara_scanner import YaraPatternScanner
 from core.colors import Colors
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -82,6 +83,31 @@ def run_triage(simulate: bool = False, check_vt: bool = False):
             triage_data["processes"], suspicious_pids
         )
 
+    # Signature scan (webshell/ransomware-note/encoded-PowerShell patterns)
+    # against the executable of any process already flagged as suspicious.
+    # This is a small built-in regex rule set inspired by YARA's style, NOT
+    # the actual YARA engine — it does not load .yar rule files or plug into
+    # the broader public YARA rule ecosystem. Previously this scanner
+    # existed in the codebase but was never called from anywhere.
+    yara_hits = []
+    if suspicious_pids:
+        yara = YaraPatternScanner()
+        for proc in triage_data["processes"]:
+            if proc.get("pid") not in suspicious_pids:
+                continue
+            exe_path = proc.get("exe")
+            if not exe_path:
+                continue
+            for match in yara.scan_file(exe_path):
+                yara_hits.append({
+                    "type": "SIGNATURE",
+                    "severity": match["severity"],
+                    "indicator": proc.get("name", exe_path),
+                    "details": f"{match['rule_name']} ({match['rule_id']}) matched in {exe_path}",
+                })
+        if yara_hits:
+            print(f"{Colors.FAIL}[SIGNATURE MATCH]{Colors.ENDC} {len(yara_hits)} pattern match(es) found in suspicious executables.")
+
     vt_hits = []
     if check_vt:
         if vt.enabled:
@@ -97,7 +123,12 @@ def run_triage(simulate: bool = False, check_vt: bool = False):
             print(f"{Colors.WARNING}[!]{Colors.ENDC} VirusTotal API key not configured. Skipping VT check.")
 
     print(f"{Colors.CYAN}[*]{Colors.ENDC} Generating Executive Incident Response Report...")
-    report_path = reporter.generate_markdown_report(triage_data, ioc_hits + [{"type": "VT", "indicator": h["process"], "severity": "CRITICAL", "detail": f"{h['vt_result']['malicious']} engines"} for h in vt_hits])
+    all_hits = (
+        ioc_hits
+        + yara_hits
+        + [{"type": "VT", "indicator": h["process"], "severity": "CRITICAL", "details": f"{h['vt_result']['malicious']} engines"} for h in vt_hits]
+    )
+    report_path = reporter.generate_markdown_report(triage_data, all_hits)
     print(f"{Colors.GREEN}[SUCCESS]{Colors.ENDC} IR Report saved at: {report_path}")
 
     print("\n" + Colors.FAIL + "=" * 65 + Colors.ENDC)
@@ -105,6 +136,9 @@ def run_triage(simulate: bool = False, check_vt: bool = False):
     for hit in ioc_hits:
         sev_color = Colors.FAIL if hit['severity'] == 'CRITICAL' else Colors.WARNING
         print(f" - {sev_color}[{hit['severity']}]{Colors.ENDC} {hit['type']}: {hit['indicator']}")
+    for hit in yara_hits:
+        sev_color = Colors.FAIL if hit['severity'] == 'CRITICAL' else Colors.WARNING
+        print(f" - {sev_color}[{hit['severity']}]{Colors.ENDC} SIGNATURE: {hit['indicator']} — {hit['details']}")
     for hit in vt_hits:
         print(f" - {Colors.FAIL}[CRITICAL]{Colors.ENDC} VT: {hit['process']} ({hit['vt_result']['malicious']} detections)")
     print(Colors.FAIL + "=" * 65 + Colors.ENDC)

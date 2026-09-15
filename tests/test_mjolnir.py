@@ -319,3 +319,54 @@ def test_refine_cpu_for_suspicious_pids_noop_when_no_suspicious_pids():
 
     mock_process_cls.assert_not_called()
     assert result == processes
+
+
+def test_run_triage_wires_yara_scanner_into_suspicious_process_executables(tmp_path, monkeypatch):
+    """
+    Regression test: core/yara_scanner.py::YaraPatternScanner existed but was
+    never called from anywhere in the codebase (dead code). run_triage() must
+    now actually scan the executable of any process flagged suspicious by the
+    IOC scanner, and surface a SIGNATURE match in both the console summary
+    findings and the generated report.
+    """
+    fake_exe = tmp_path / "fake_ransomware.exe"
+    fake_exe.write_bytes(b"junk header ... YOUR_FILES_ARE_ENCRYPTED ... trailer")
+
+    fake_triage_data = {
+        "system_info": {"hostname": "testhost", "os": "Windows", "os_release": "10", "timestamp": "2026-01-01 00:00:00"},
+        "processes": [
+            {"pid": 4242, "name": "fake_ransomware.exe", "exe": str(fake_exe), "username": "user", "cpu_percent": 1.0, "memory_percent": 1.0},
+        ],
+        "network_connections": [],
+        "processes_count": 1,
+    }
+
+    monkeypatch.setattr(main.SystemTriage, "run_full_triage", lambda self: fake_triage_data)
+    monkeypatch.setattr(
+        main.IOCScanner,
+        "scan",
+        lambda self, data: [{"type": "SUSPICIOUS_PROCESS", "severity": "HIGH", "indicator": "fake_ransomware.exe", "details": "test", "pid": 4242}],
+    )
+    monkeypatch.setattr(main.SystemTriage, "refine_cpu_for_suspicious_pids", lambda self, processes, pids: processes)
+
+    report_path_holder = {}
+    original_generate = main.IncidentReporter.generate_markdown_report
+
+    def _capture(self, triage_data, hits):
+        path = original_generate(self, triage_data, hits)
+        report_path_holder["path"] = path
+        return path
+
+    monkeypatch.setattr(main.IncidentReporter, "generate_markdown_report", _capture)
+
+    main.run_triage(simulate=False, check_vt=False)
+
+    report_path = report_path_holder["path"]
+    try:
+        with open(report_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "SIGNATURE" in content
+        assert "RULE_RANSOMWARE_NOTE" in content
+    finally:
+        if os.path.exists(report_path):
+            os.remove(report_path)
