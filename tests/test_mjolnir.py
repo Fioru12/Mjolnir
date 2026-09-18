@@ -362,11 +362,16 @@ def test_run_triage_wires_yara_scanner_into_suspicious_process_executables(tmp_p
     main.run_triage(simulate=False, check_vt=False)
 
     report_path = report_path_holder["path"]
+    # generate_markdown_report() also writes a companion .html report as a
+    # side effect - clean that up too, or it's left behind in output/ on
+    # every test run.
+    html_path = os.path.splitext(report_path)[0] + ".html"
     try:
         with open(report_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "SIGNATURE" in content
         assert "RULE_RANSOMWARE_NOTE" in content
     finally:
-        if os.path.exists(report_path):
-            os.remove(report_path)
+        for path in (report_path, html_path):
+            if os.path.exists(path):
+                os.remove(path)
