@@ -83,30 +83,36 @@ def run_triage(simulate: bool = False, check_vt: bool = False):
             triage_data["processes"], suspicious_pids
         )
 
-    # Signature scan (webshell/ransomware-note/encoded-PowerShell patterns)
-    # against the executable of any process already flagged as suspicious.
-    # This is a small built-in regex rule set inspired by YARA's style, NOT
-    # the actual YARA engine — it does not load .yar rule files or plug into
-    # the broader public YARA rule ecosystem. Previously this scanner
-    # existed in the codebase but was never called from anywhere.
+    # Real YARA signature scan (webshell/ransomware-note/encoded-PowerShell
+    # rules in rules/default.yar, compiled via yara-python) against the
+    # executable of any process already flagged as suspicious.
     yara_hits = []
     if suspicious_pids:
-        yara = YaraPatternScanner()
-        for proc in triage_data["processes"]:
-            if proc.get("pid") not in suspicious_pids:
-                continue
-            exe_path = proc.get("exe")
-            if not exe_path:
-                continue
-            for match in yara.scan_file(exe_path):
-                yara_hits.append({
-                    "type": "SIGNATURE",
-                    "severity": match["severity"],
-                    "indicator": proc.get("name", exe_path),
-                    "details": f"{match['rule_name']} ({match['rule_id']}) matched in {exe_path}",
-                })
-        if yara_hits:
-            print(f"{Colors.FAIL}[SIGNATURE MATCH]{Colors.ENDC} {len(yara_hits)} pattern match(es) found in suspicious executables.")
+        try:
+            yara_scanner = YaraPatternScanner()
+        except Exception as e:
+            # yara-python not installed, or no .yar files found - degrade
+            # to "signature scanning skipped", never crash the whole triage
+            # over an optional dependency.
+            yara_scanner = None
+            print(f"{Colors.WARNING}[!]{Colors.ENDC} YARA signature scan skipped: {e}")
+
+        if yara_scanner:
+            for proc in triage_data["processes"]:
+                if proc.get("pid") not in suspicious_pids:
+                    continue
+                exe_path = proc.get("exe")
+                if not exe_path:
+                    continue
+                for match in yara_scanner.scan_file(exe_path):
+                    yara_hits.append({
+                        "type": "SIGNATURE",
+                        "severity": match["severity"],
+                        "indicator": proc.get("name", exe_path),
+                        "details": f"{match['rule_name']} ({match['rule_id']}) matched in {exe_path}",
+                    })
+            if yara_hits:
+                print(f"{Colors.FAIL}[SIGNATURE MATCH]{Colors.ENDC} {len(yara_hits)} pattern match(es) found in suspicious executables.")
 
     vt_hits = []
     if check_vt:

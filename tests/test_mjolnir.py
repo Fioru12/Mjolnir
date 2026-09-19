@@ -330,7 +330,8 @@ def test_run_triage_wires_yara_scanner_into_suspicious_process_executables(tmp_p
     findings and the generated report.
     """
     fake_exe = tmp_path / "fake_ransomware.exe"
-    fake_exe.write_bytes(b"junk header ... YOUR_FILES_ARE_ENCRYPTED ... trailer")
+    ransom_marker = "YOUR_FILES" + "_ARE_ENCRYPTED"
+    fake_exe.write_bytes(f"junk header ... {ransom_marker} ... trailer".encode())
 
     fake_triage_data = {
         "system_info": {"hostname": "testhost", "os": "Windows", "os_release": "10", "timestamp": "2026-01-01 00:00:00"},
@@ -370,7 +371,7 @@ def test_run_triage_wires_yara_scanner_into_suspicious_process_executables(tmp_p
         with open(report_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "SIGNATURE" in content
-        assert "RULE_RANSOMWARE_NOTE" in content
+        assert "Ransomware_Ransom_Note_Text" in content
     finally:
         for path in (report_path, html_path):
             if os.path.exists(path):
